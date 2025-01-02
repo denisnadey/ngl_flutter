@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -57,6 +59,27 @@ class _NGLViewerWidgetState extends State<NGLViewerWidget> {
         'DebugChannel',
         onMessageReceived: (JavaScriptMessage message) {
           debugPrint(message.message);
+        },
+      )
+      ..addJavaScriptChannel(
+        'CaptureChannel',
+        onMessageReceived: (JavaScriptMessage message) {
+          final response = jsonDecode(message.message);
+
+          // Допустим, наша JS-часть отправляет объекты вида:
+          // { "type": "image", "data": "BASE64..." }
+          if (response['type'] == 'image' &&
+              _nglController.captureRequests.isNotEmpty) {
+            // Забираем первый «ожидающий» Completer и завершаем его
+            final requestCompleter = _nglController.captureRequests.removeAt(0);
+
+            final base64Image = response['data'] as String;
+
+            // завершаем Completer
+            if (!requestCompleter.isCompleted) {
+              requestCompleter.complete(base64Image);
+            }
+          }
         },
       )
       ..setNavigationDelegate(

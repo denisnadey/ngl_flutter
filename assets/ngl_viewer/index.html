@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NGL Viewer</title>
-  <script src="https://cdn.jsdelivr.net/npm/ngl@2.0.0-dev.38/dist/ngl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ngl@2.0.0-dev.38/dist/ngl.js" crossorigin="anonymous"> </script>
   <style>
     body {
       margin: 0;
@@ -22,7 +22,7 @@
 </head>
 <body>
   <div id="viewport"></div>
-  <script>
+  <script >
     const stage = new NGL.Stage("viewport");
   
     function loadLigand(ligandId) {
@@ -43,25 +43,78 @@
     }
   
     function captureImage() {
-      stage.makeImage({ factor: 2, antialias: true })
-        .then(blob => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const base64data = reader.result.split(',')[1];
-            window.FlutterChannel.postMessage(
-              JSON.stringify({ type: 'image', data: base64data })
-            );
-          };
-          reader.readAsDataURL(blob);
-        })
-        .catch(error => {
-          console.error('Error capturing image:', error);
-          window.FlutterChannel.postMessage(
-            JSON.stringify({ error: `Failed to capture image: ${error.message}` })
+  stage.makeImage({ factor: 2, antialias: true })
+    .then(blob => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64data = reader.result.split(',')[1];
+        if (window.CaptureChannel) {
+          window.CaptureChannel.postMessage(
+            JSON.stringify({ type: 'image', data: base64data })
           );
-        });
-    }
+        } else {
+          console.error('CaptureChannel is not available');
+        }
+      };
+      reader.onerror = () => {
+        console.error('Error reading blob as base64');
+        if (window.DebugChannel) {
+          window.DebugChannel.postMessage('Error reading blob');
+        }
+      };
+      reader.readAsDataURL(blob);
+    })
+    .catch(error => {
+      console.error('Error capturing image:', error.message);
+      if (window.DebugChannel) {
+        window.DebugChannel.postMessage(
+          `Error capturing image: ${error.message}`
+        );
+      }
+    });
+}
 
+
+
+
+    // Отправка сообщений в DebugChannel
+function sendToDebugChannel(message) {
+    if (window.DebugChannel) {
+        window.DebugChannel.postMessage(message);
+    } else {
+        console.log("DebugChannel is not available: ", message);
+    }
+}
+
+window.onerror = function (message, source, lineno, colno, error) {
+    const errorMessage = `
+        Error: ${message}
+        Source: ${source || 'N/A'}
+        Line: ${lineno || 'N/A'}, Column: ${colno || 'N/A'}
+        Stack: ${error && error.stack ? error.stack : 'N/A'}
+    `;
+    sendToDebugChannel(errorMessage);
+};
+
+window.addEventListener('unhandledrejection', function (event) {
+    const errorMessage = `
+        Unhandled Rejection: ${event.reason || 'Unknown Reason'}
+        Stack: ${event.reason && event.reason.stack ? event.reason.stack : 'N/A'}
+    `;
+    sendToDebugChannel(errorMessage);
+});
+
+const originalConsoleError = console.error;
+console.error = function (...args) {
+    sendToDebugChannel(`Console Error: ${args.join(' ')}`);
+    originalConsoleError.apply(console, args);
+};
+
+const originalConsoleWarn = console.warn;
+console.warn = function (...args) {
+    sendToDebugChannel(`Console Warning: ${args.join(' ')}`);
+    originalConsoleWarn.apply(console, args);
+};
 
   </script>
 </body>

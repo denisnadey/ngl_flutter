@@ -6,7 +6,12 @@ import 'package:webview_flutter/webview_flutter.dart';
 class NGLViewerController {
   late WebViewController _webViewController;
 
-  final Set<String> _channels = {};
+  /// Флаг, показывающий, добавляли ли мы уже JavaScript-канал.
+  bool _captureChannelAdded = false;
+
+  /// Очередь всех ожидающих Completer-ов
+  /// (каждый вызов `captureImage` создаёт свой Completer).
+  final List<Completer<String>> captureRequests = [];
 
   void attach(WebViewController controller) {
     _webViewController = controller;
@@ -16,27 +21,21 @@ class NGLViewerController {
     await _webViewController.runJavaScript("loadLigand('$ligandId');");
   }
 
+  /// Вызываем captureImage и, когда придёт результат из JS, вызываем [onImageCaptured].
   Future<void> captureImage(
       Function(String base64Image) onImageCaptured) async {
-    Completer<String> completer = Completer<String>();
+    // Создаём новый Completer для каждого вызова captureImage
+    final completer = Completer<String>();
+    captureRequests.add(completer);
 
-    if (_channels.contains('CaptureChannel')) {
-      await _webViewController.runJavaScript("captureImage();");
-    } else {
-      _channels.add('CaptureChannel');
-      await _webViewController.addJavaScriptChannel(
-        'CaptureChannel',
-        onMessageReceived: (JavaScriptMessage message) {
-          final response = jsonDecode(message.message);
-          if (response['type'] == 'image') {
-            onImageCaptured(response['data']);
-            completer.complete(response['data']);
-          }
-        },
-      );
-      await _webViewController.runJavaScript("captureImage();");
-    }
-    await completer.future;
+    // Запускаем captureImage() на стороне WebView
+    await _webViewController.runJavaScript("captureImage();");
+
+    // Дожидаемся, пока Completer завершится (получим base64 с JS)
+    final result = await completer.future;
+
+    // Вызываем переданный колбэк
+    onImageCaptured(result);
   }
 
   Future<void> reload() async {

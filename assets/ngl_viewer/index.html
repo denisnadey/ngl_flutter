@@ -77,6 +77,12 @@
 
 
 
+
+
+
+
+
+
     // Отправка сообщений в DebugChannel
 function sendToDebugChannel(message) {
     if (window.DebugChannel) {
@@ -85,6 +91,7 @@ function sendToDebugChannel(message) {
         console.log("DebugChannel is not available: ", message);
     }
 }
+
 
 window.onerror = function (message, source, lineno, colno, error) {
     const errorMessage = `
@@ -115,6 +122,10 @@ console.warn = function (...args) {
     sendToDebugChannel(`Console Warning: ${args.join(' ')}`);
     originalConsoleWarn.apply(console, args);
 };
+
+
+
+
 
   </script>
 </body>

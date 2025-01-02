@@ -1,13 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:ngl_flutter/export_file.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class NGLViewerController {
   late WebViewController _webViewController;
 
-  /// Флаг, показывающий, добавляли ли мы уже JavaScript-канал.
-  bool _captureChannelAdded = false;
+  
+  StreamController<AtomInfo> atomInfoStreamController = StreamController<AtomInfo>.broadcast();
+
+  Stream<AtomInfo> get atomInfoStream => atomInfoStreamController.stream;
+
+  
 
   /// Очередь всех ожидающих Completer-ов
   /// (каждый вызов `captureImage` создаёт свой Completer).
@@ -20,6 +25,9 @@ class NGLViewerController {
   Future<void> loadLigand(String ligandId) async {
     await _webViewController.runJavaScript("loadLigand('$ligandId');");
   }
+
+  
+
 
   /// Вызываем captureImage и, когда придёт результат из JS, вызываем [onImageCaptured].
   Future<void> captureImage(

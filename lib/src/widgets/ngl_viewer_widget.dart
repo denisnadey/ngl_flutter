@@ -1,16 +1,10 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:ngl_flutter/src/controllers/ngl_controller.dart';
-import 'package:ngl_flutter/src/models/atom_info.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
 
 class NGLViewerWidget extends StatefulWidget {
   final String ligandId;
@@ -104,8 +98,7 @@ class _NGLViewerWidgetState extends State<NGLViewerWidget> {
       children: [
         WebViewWidget(
           controller: _controller,
-          gestureRecognizers: Set()
-            ..add(Factory<TapGestureRecognizer>(
+          gestureRecognizers: {}..add(Factory<TapGestureRecognizer>(
               () => TapGestureRecognizer(),
             )),
         ),

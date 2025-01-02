@@ -6,7 +6,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 class NGLViewerController {
   late WebViewController _webViewController;
 
-  Set<String> _channels = {};
+  final Set<String> _channels = {};
 
   void attach(WebViewController controller) {
     _webViewController = controller;

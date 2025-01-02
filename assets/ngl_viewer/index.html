@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NGL Viewer</title>
+  <script src="https://cdn.jsdelivr.net/npm/ngl@2.0.0-dev.38/dist/ngl.js"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+    }
+
+    #viewport {
+  width: 100vw;
+  height: 100vh;
+}
+  </style>
+</head>
+<body>
+  <div id="viewport"></div>
+  <script>
+    const stage = new NGL.Stage("viewport");
+  
+    function loadLigand(ligandId) {
+      const cifUrl = `https://files.rcsb.org/ligands/view/${ligandId}.cif`;
+     
+      stage.loadFile(cifUrl, { defaultRepresentation: true })
+  .then(component => {
+    component.addRepresentation("ball+stick", { colorScheme: "cpk" });
+
+  })
+  .catch(error => {
+    console.error('Error loading ligand:', error);
+    window.FlutterChannel.postMessage(
+      JSON.stringify({ error: `Failed to load ligand ${ligandId}: ${error.message}` })
+    );
+  });
+
+    }
+  
+    function captureImage() {
+      stage.makeImage({ factor: 2, antialias: true })
+        .then(blob => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const base64data = reader.result.split(',')[1];
+            window.FlutterChannel.postMessage(
+              JSON.stringify({ type: 'image', data: base64data })
+            );
+          };
+          reader.readAsDataURL(blob);
+        })
+        .catch(error => {
+          console.error('Error capturing image:', error);
+          window.FlutterChannel.postMessage(
+            JSON.stringify({ error: `Failed to capture image: ${error.message}` })
+          );
+        });
+    }
+
+
+  </script>
+</body>
+</html>

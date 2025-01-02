@@ -1,0 +1,26 @@
+name: ngl_flutter
+description: "A new Flutter package project."
+version: 0.0.1
+homepage: null
+
+environment:
+  sdk: ^3.6.0
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  path_provider: ^2.1.5
+  webview_flutter: ^4.10.0
+  webview_flutter_android: ^4.2.0
+  webview_flutter_wkwebview: ^3.16.3
+
+dev_dependencies:
+  flutter_lints: ^5.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/ngl_viewer/
